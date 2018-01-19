@@ -52,16 +52,18 @@ class startBot(object):
 		self.verbose = verbose
 		self.webAddress = webAddress
 		if loginType == None:
-			self.login = False
+			self.autoLogin = False
 		else:
-			self.login = True
+			self.autoLogin = True
 		self.driver = webdriver.Firefox()
 		#This "Starts" the browser that we will automate
 		self.driver.get("https://www.muthead.com/login")
 		# this goes to the login screen
-		if self.login == True:
-			self.driver.get()
-
+		if self.autoLogin == True:
+			self.autoLogin = self.login(loginType, username, password)
+			# this attempts to login
+		if self.autoLogin == False:
+			raw_input("You'll have to login manually.  Click enter after successful login: ")
 		self.driver.get()
 
 	def login(self, loginType, username, password):
@@ -75,6 +77,10 @@ class startBot(object):
 			driver.find_element_by_id("password").clear().send_keys(password)
 			driver.find_element_by_xpath("//button[@type='submit']").click()
 			#this is the submit button to login
+			time.sleep(5)
+			if driver.url == 'http://www.muthead.com/':
+				return True
+
 		elif login.lower() == 'curse':
 			time.sleep(5)
 			# curse requires a slightly shorter timeout
@@ -84,8 +90,10 @@ class startBot(object):
 			driver.find_element_by_id("field-loginFormPassword").clear().send_keys(password)
 			driver.find_element_by_css_selector("button.u-button.u-button-z").click()
 			# this is the submit button for curse
-		else:
-			raw_input("You typed in an invalid login type.  You'll have to login manually.  Continue (Y/N) ")
+			time.sleep(5)
+			if driver.url == 'http://www.muthead.com/':
+				return True
+		return False
 
 			
 
