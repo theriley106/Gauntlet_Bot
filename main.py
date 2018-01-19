@@ -18,6 +18,7 @@ def grabSite(url, retry=False):
 
 
 def grabAllPlayersNums(verbose=True, saveAs="database.json"):
+	#This grabs every player number from Muthead - it generates that primaryDB.json
 	playerDB = []
 	for pageNum in range(1,214):
 		try:

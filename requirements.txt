@@ -1,0 +1,4 @@
+requests==2.12.3
+bs4==0.0.1
+lxml==3.5.0
+selenium==2.53.6
