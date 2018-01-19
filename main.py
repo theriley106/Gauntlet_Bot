@@ -4,6 +4,7 @@ import threading
 import re
 import traceback
 import json
+import time
 from selenium import webdriver
 # only for Madden 18 rn
 
@@ -57,12 +58,16 @@ class startBot(object):
 			self.autoLogin = True
 		self.driver = webdriver.Firefox()
 		#This "Starts" the browser that we will automate
-		self.driver.get("https://www.muthead.com/login")
-		# this goes to the login screen
 		if self.autoLogin == True:
-			self.autoLogin = self.login(loginType, username, password)
+			print("Auto-login is not currently supported")
+			#self.autoLogin = self.login(loginType, username, password)
 			# this attempts to login
 		if self.autoLogin == False:
+			if loginType != None:
+				self.driver.get("https://www.muthead.com/{}-login".format(loginType.lower()))
+			else:
+				self.driver.get("https://www.muthead.com/login")
+			# this goes to the login screen
 			raw_input("You'll have to login manually.  Click enter after successful login: ")
 		self.driver.get()
 
@@ -71,28 +76,38 @@ class startBot(object):
 		if loginType.lower() == 'twitch':
 			time.sleep(10)
 			# twitch requires a huge timeout for some reason...
-			driver.find_element_by_id("username").clear().send_keys(username)
+			self.driver.find_element_by_id("username").clear().send_keys(username)
 			time.sleep(.5)
 			# micro pause between the two inputs
-			driver.find_element_by_id("password").clear().send_keys(password)
-			driver.find_element_by_xpath("//button[@type='submit']").click()
+			self.driver.find_element_by_id("password").clear().send_keys(password)
+			self.driver.find_element_by_xpath("//button[@type='submit']").click()
 			#this is the submit button to login
 			time.sleep(5)
 
 		elif login.lower() == 'curse':
 			time.sleep(5)
 			# curse requires a slightly shorter timeout
-			driver.find_element_by_id("field-loginFormPassword").clear().send_keys(username)
+			self.driver.find_element_by_id("field-loginFormPassword").clear().send_keys(username)
 			time.sleep(.5)
 			# micro pause between the two inputs
-			driver.find_element_by_id("field-loginFormPassword").clear().send_keys(password)
-			driver.find_element_by_css_selector("button.u-button.u-button-z").click()
+			self.driver.find_element_by_id("field-loginFormPassword").clear().send_keys(password)
+			self.driver.find_element_by_css_selector("button.u-button.u-button-z").click()
 			# this is the submit button for curse
 			time.sleep(5)
-		if driver.url == 'http://www.muthead.com/':
+		if self.driver.url == 'http://www.muthead.com/':
 			return True
 		else:
 			return False
+
+	def startGame(self):
+		self.driver.get("http://www.muthead.com/gauntlet")
+
+	def clickPlayNowButton(self):
+		if self.driver.url == "http://www.muthead.com/gauntlet":
+			driver.find_element_by_css_selector("button.button").click()
+		else:
+			if raw_input("Wrong page on clickPlayNowButton.  Retry? (Y/N) ").lower() == 'y':
+				driver.find_element_by_css_selector("button.button").click()
 
 			
 
@@ -108,7 +123,11 @@ class startBot(object):
 
 #login type can either be "curse" or "twitch"
 if __name__ == '__main__':
-	grabAllPlayersNums()
+	username = 'yaaaaaaaboy'
+	bot = startBot(loginType='twitch', username=username, password='parkerddog10616')
+	bot.startGame()
+	bot.clickPlayNowButton()
+	#grabAllPlayersNums()
 	'''res = grabSite("http://www.muthead.com/18/players/{}/full-ratings".format(raw_input("Player number: ")))
 	page = bs4.BeautifulSoup(res.text, 'lxml')
 	print page.title.string
