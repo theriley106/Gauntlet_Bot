@@ -4,6 +4,7 @@ import threading
 import re
 import traceback
 import json
+from selenium import webdriver
 # only for Madden 18 rn
 
 def grabSite(url, retry=False):
@@ -45,6 +46,51 @@ def extractCardNum(cardNumElem):
 	re.findall("instance_card_(\d+)", str(cardNumElem))
 	instance_card_
 
+class startBot(object):
+	"""docstring for startBot"""
+	def __init__(self, loginType=None, username=None, password=None, verbose=False, webAddress='http://www.muthead.com/gauntlet'):
+		self.verbose = verbose
+		self.webAddress = webAddress
+		if loginType == None:
+			self.login = False
+		else:
+			self.login = True
+		self.driver = webdriver.Firefox()
+		#This "Starts" the browser that we will automate
+		self.driver.get("https://www.muthead.com/login")
+		# this goes to the login screen
+		if self.login == True:
+			self.driver.get()
+
+		self.driver.get()
+
+	def login(self, loginType, username, password):
+		self.driver.get("https://www.muthead.com/{}-login".format(loginType.lower()))
+		if loginType.lower() == 'twitch':
+			time.sleep(10)
+			# twitch requires a huge timeout for some reason...
+			driver.find_element_by_id("username").clear().send_keys(username)
+			time.sleep(.5)
+			# micro pause between the two inputs
+			driver.find_element_by_id("password").clear().send_keys(password)
+			driver.find_element_by_xpath("//button[@type='submit']").click()
+			#this is the submit button to login
+		elif login.lower() == 'curse':
+			time.sleep(5)
+			# curse requires a slightly shorter timeout
+			driver.find_element_by_id("field-loginFormPassword").clear().send_keys(username)
+			time.sleep(.5)
+			# micro pause between the two inputs
+			driver.find_element_by_id("field-loginFormPassword").clear().send_keys(password)
+			driver.find_element_by_css_selector("button.u-button.u-button-z").click()
+			# this is the submit button for curse
+		else:
+			raw_input("You typed in an invalid login type.  You'll have to login manually.  Continue (Y/N) ")
+
+			
+
+
+
 #def grabPlayerInfo():
 
 #def grabAllInfo():
@@ -53,7 +99,7 @@ def extractCardNum(cardNumElem):
 	#grabSite('http://www.muthead.com/18/players')
 
 
-
+#login type can either be "curse" or "twitch"
 if __name__ == '__main__':
 	grabAllPlayersNums()
 	'''res = grabSite("http://www.muthead.com/18/players/{}/full-ratings".format(raw_input("Player number: ")))
