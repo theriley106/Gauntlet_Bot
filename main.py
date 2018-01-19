@@ -18,6 +18,8 @@ def grabSite(url, retry=False):
 		res = requests.get(url, headers=headers)
 	return res
 
+def genClass(playNum):
+	return '.instance_card_{}'.format(playNum)
 
 def grabAllPlayersNums(verbose=True, saveAs="database.json"):
 	#This grabs every player number from Muthead - it generates that primaryDB.json
@@ -60,6 +62,7 @@ class startBot(object):
 		#This "Starts" the browser that we will automate
 		if self.autoLogin == True:
 			print("Auto-login is not currently supported")
+			self.autoLogin = False
 			#self.autoLogin = self.login(loginType, username, password)
 			# this attempts to login
 		if self.autoLogin == False:
@@ -69,7 +72,7 @@ class startBot(object):
 				self.driver.get("https://www.muthead.com/login")
 			# this goes to the login screen
 			raw_input("You'll have to login manually.  Click enter after successful login: ")
-		self.driver.get()
+		#self.driver.get()
 
 	def login(self, loginType, username, password):
 		self.driver.get("https://www.muthead.com/{}-login".format(loginType.lower()))
@@ -94,23 +97,54 @@ class startBot(object):
 			self.driver.find_element_by_css_selector("button.u-button.u-button-z").click()
 			# this is the submit button for curse
 			time.sleep(5)
-		if self.driver.url == 'http://www.muthead.com/':
+		if self.driver.current_url == 'http://www.muthead.com/':
 			return True
 		else:
 			return False
 
+	def getCurrentPlayersOnScreen(self):
+		htmlElement = self.driver.find_element_by_css_selector(".gauntlet-choices").get_attribute('innerHTML')
+		cardsOnScreen = re.findall("\sinstance_card_(\d+)", str(htmlElement))
+		if len(cardsOnScreen) == 3:
+			return cardsOnScreen
+		else:
+			return None
+
+	def getPlayableChoices(self):
+		return self.driver.find_element_by_css_selector(".gauntlet-choices .playable").get_attribute('innerHTML')
+
 	def startGame(self):
 		self.driver.get("http://www.muthead.com/gauntlet")
 
+	def returnQuestion(self):
+		questionRaw = self.driver.find_element_by_css_selector(".question").get_attribute('innerHTML')
+		return str(re.sub("(<!--.*?-->)", "", questionRaw, flags=re.MULTILINE))
+
+	def extractVarFromQuestion(self, question):
+		return question.partition(")?")[0].partition(" (")[2]
+
+	def clickContinueButton(self):
+		self.driver.find_element_by_css_selector(".continue-button").click()
+
 	def clickPlayNowButton(self):
-		if self.driver.url == "http://www.muthead.com/gauntlet":
+		if self.driver.current_url == "http://www.muthead.com/gauntlet":
 			driver.find_element_by_css_selector("button.button").click()
 		else:
-			if raw_input("Wrong page on clickPlayNowButton.  Retry? (Y/N) ").lower() == 'y':
+			if raw_input("Wrong page on clickPlayNowButton.  Retry? (Y/N) ").lower() = 'y':
 				driver.find_element_by_css_selector("button.button").click()
 
-			
+	def choosePlayer(self, indexNum):
+		#index num is the location on the screen
+		selection = self.getCurrentPlayersOnScreen()[indexNum]
+		cssSelector = genClass(selection)
+		self.driver.find_element_by_css_selector(cssSelector).click()
 
+	def getAnswerResult(self):
+		return self.driver.find_element_by_css_selector(".result").get_attribute('innerHTML')
+			
+	def getCurrentScore(self):
+		scoreElem = self.driver.find_element_by_css_selector(".stat-board .score").get_attribute('innerHTML')
+		return re.findall('\d+', str(re.sub("(<!--.*?-->)", "", scoreElem, flags=re.MULTILINE)))[0]
 
 
 #def grabPlayerInfo():
