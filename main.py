@@ -4,22 +4,137 @@ import threading
 import re
 import traceback
 import json
+import RandomHeaders
 import time
 from selenium import webdriver
-# only for Madden 18 rn
 
 def grabSite(url, retry=False):
 	failCount = 0
-	headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
-	res = requests.get(url, headers=headers)
+	headers = {'User-Agent': '{}'.format(RandomHeaders.LoadHeader())}
+	try:
+		res = requests.get(url, headers=headers, timeout=5)
+	except:
+		res = None
 	while res.status_code != 200 and failCount < 5 and retry == True:
-		print("Network Failed: {}".format(url))
-		# this will reattempt to grab the page 5 times if you specify retry as true
-		res = requests.get(url, headers=headers)
+		try:
+			print("Network Failed: {}".format(url))
+			# this will reattempt to grab the page 5 times if you specify retry as true
+			res = requests.get(url, headers=headers)
+		except:
+			res = None
+			failCount = failCount + 1
+	if failCount > 3:
+		res = None
 	return res
+
+def chunks(l, n):
+	for i in xrange(0, len(l), n):
+		yield l[i:i + n]
+
+def returnVar(page, var):
+	return re.findall("'>{}<span>(\d+)</span></li>".format(var), str(page))[0]
+
+
 
 def genClass(playNum):
 	return '.instance_card_{}'.format(playNum)
+
+def loadDatabase(databaseName='primaryDB.json'):
+	with open(databaseName) as json_data:
+		return json.load(json_data)
+
+
+def oldReturnPlayerInfo(playNumList):
+	tempInfo = []
+	for val in playNumList:
+		try:
+			print("{}".format(len(fullDB)))
+			playNum = val['Number']
+			information = {}
+			information["playerNum"] = playNum
+			res = grabSite("http://www.muthead.com/18/players/{}/tooltip".format(playNum))
+			if res != None:
+				page = bs4.BeautifulSoup(res.text, 'lxml')
+				Foot, Inch = re.findall("\d+", str(re.findall("'>{}<span>(.+)</span></li>".format("HT"), str(page))).partition('"<')[0])
+				information["instanceID"] = re.findall("instance_card_(\d+)", str(page))[0]
+				information["Overall"] = re.findall("(\d+)", str(page).partition("overall")[2].partition("span")[0])[0]
+				information["Position"] = re.findall("(\w+)", str(page).partition("position")[2].partition("span")[0])[0]
+				information["First_Name"] = re.findall("(\w+)", str(page).partition("first-and-last-name")[2].partition("span")[0])[0]
+				information["Last_Name"] = re.findall("(\w+)", str(page).partition("first-and-last-name")[2].partition("span")[0])[-1]
+				information["Full_Name"] = ' '.join(re.findall("(\w+)", str(page).partition("first-and-last-name")[2].partition("span")[0]))
+				information["HT"] = {"Feet": Foot, "Inch": Inch}
+				for var in re.findall("(\w+)<span>\d", str(page))[1:]:
+					information[var] = returnVar(page, var)
+				fullDB.append(information)
+		except Exception as exp:
+			if 'keyboardinterrupt' in str(exp).lower():
+				sys.exit(0)
+			else:
+				traceback.print_exc()
+
+def grabAllStats(playerID):
+	information = {}
+	res = grabSite("http://www.muthead.com/18/players/{}/full-ratings".format(playerID))
+	page = bs4.BeautifulSoup(res.text, 'lxml')
+	selection = page.select(".player-details-left .player-details-stats span")
+	for i in range(0, len(selection), 2):
+		try:
+			information[str(selection[i:i+2][-1].strip())] = int(selection[i:i+2][0].strip())
+		except:
+			print("Error")
+	return information
+
+
+def grabMoreInfoAboutPlayers():
+	fullDB = []
+	lock = threading.Lock()
+	data = loadDatabase()
+	data = chunks(data, int(len(data)/25))
+	#this makes it so you can have 25 threads running simultaniously
+	def returnPlayerInfo(playNumList):
+		tempInfo = []
+		for val in playNumList:
+			try:
+				print("{}".format(len(fullDB)))
+				playNum = val['Number']
+				information = {}
+				information["playerNum"] = playNum
+				res = grabSite("http://www.muthead.com/18/players/{}/full-ratings".format(playNum))
+				if res != None:
+					page = bs4.BeautifulSoup(res.text, 'lxml')
+					selection = page.select(".player-details-left .player-details-stats span")
+					for i in range(0, len(selection), 2):
+						try:
+							keyw = str(selection[i:i+2][-1].getText()).strip()
+							valw = int(selection[i:i+2][0].getText().strip())
+							information[keyw] = valw
+						except Exception as exp:
+							traceback.print_exc()
+					res = grabSite("http://www.muthead.com/18/players/{}/tooltip".format(playNum))
+					if res != None:
+						page = bs4.BeautifulSoup(res.text, 'lxml')
+						Foot, Inch = re.findall("\d+", str(re.findall("'>{}<span>(.+)</span></li>".format("HT"), str(page))).partition('"<')[0])
+						information["instanceID"] = re.findall("instance_card_(\d+)", str(page))[0]
+						information["Overall"] = re.findall("(\d+)", str(page).partition("overall")[2].partition("span")[0])[0]
+						information["Position"] = re.findall("(\w+)", str(page).partition("position")[2].partition("span")[0])[0]
+						information["First_Name"] = re.findall("(\w+)", str(page).partition("first-and-last-name")[2].partition("span")[0])[0]
+						information["Last_Name"] = re.findall("(\w+)", str(page).partition("first-and-last-name")[2].partition("span")[0])[-1]
+						information["Full_Name"] = ' '.join(re.findall("(\w+)", str(page).partition("first-and-last-name")[2].partition("span")[0]))
+						information["HT"] = {"Feet": Foot, "Inch": Inch}
+				fullDB.append(information)
+			except Exception as exp:
+				if 'keyboardinterrupt' in str(exp).lower():
+					sys.exit(0)
+				else:
+					traceback.print_exc()
+	threads = [threading.Thread(target=returnPlayerInfo, args=(ar,)) for ar in data]
+
+	for thread in threads:
+		thread.start()
+	for thread in threads:
+		thread.join()
+	with open("Database.json", 'w') as fout:
+		json.dump(fullDB, fout)
 
 def grabAllPlayersNums(verbose=True, saveAs="database.json"):
 	#This grabs every player number from Muthead - it generates that primaryDB.json
@@ -52,6 +167,7 @@ def extractCardNum(cardNumElem):
 class startBot(object):
 	"""docstring for startBot"""
 	def __init__(self, loginType=None, username=None, password=None, verbose=False, webAddress='http://www.muthead.com/gauntlet'):
+		self.Database = loadDatabase("src/Database.json")
 		self.verbose = verbose
 		self.webAddress = webAddress
 		if loginType == None:
@@ -59,6 +175,7 @@ class startBot(object):
 		else:
 			self.autoLogin = True
 		self.driver = webdriver.Firefox()
+		self.driver.set_page_load_timeout(30)
 		#This "Starts" the browser that we will automate
 		if self.autoLogin == True:
 			print("Auto-login is not currently supported")
@@ -101,12 +218,26 @@ class startBot(object):
 			return True
 		else:
 			return False
+	def returnPlayerValue(self, instanceID, value):
+		for val in self.Database:
+			if val["instanceID"] == instanceID:
+				try:
+					returnVal = val[value]
+					return returnVal
+				except:
+					pass
+		return 0
 
 	def getCurrentPlayersOnScreen(self):
+		playersOnScreen = []
 		htmlElement = self.driver.find_element_by_css_selector(".gauntlet-choices").get_attribute('innerHTML')
 		cardsOnScreen = re.findall("\sinstance_card_(\d+)", str(htmlElement))
+		variable = self.extractVarFromQuestion(self.returnQuestion())
 		if len(cardsOnScreen) == 3:
-			return cardsOnScreen
+			for i, idValue in enumerate(cardsOnScreen):
+				playersOnScreen.append({"ID": idValue, "Index": i, "Value": self.returnPlayerValue(idValue, variable)})
+			return int(sorted(playersOnScreen, key=lambda k: k['Value'], reverse=True)[0]["ID"])
+			
 		else:
 			return None
 
@@ -123,15 +254,18 @@ class startBot(object):
 	def extractVarFromQuestion(self, question):
 		return question.partition(")?")[0].partition(" (")[2]
 
+	def solveQuestionOnScreen(self):
+		self.driver.find_element_by_css_selector(genClass(self.getCurrentPlayersOnScreen())).click()
+
 	def clickContinueButton(self):
 		self.driver.find_element_by_css_selector(".continue-button").click()
 
 	def clickPlayNowButton(self):
 		if self.driver.current_url == "http://www.muthead.com/gauntlet":
-			driver.find_element_by_css_selector("button.button").click()
+			self.driver.find_element_by_css_selector("button.button").click()
 		else:
-			if raw_input("Wrong page on clickPlayNowButton.  Retry? (Y/N) ").lower() = 'y':
-				driver.find_element_by_css_selector("button.button").click()
+			if raw_input("Wrong page on clickPlayNowButton.  Retry? (Y/N) ").lower() == 'y':
+				self.driver.find_element_by_css_selector("button.button").click()
 
 	def choosePlayer(self, indexNum):
 		#index num is the location on the screen
@@ -146,29 +280,18 @@ class startBot(object):
 		scoreElem = self.driver.find_element_by_css_selector(".stat-board .score").get_attribute('innerHTML')
 		return re.findall('\d+', str(re.sub("(<!--.*?-->)", "", scoreElem, flags=re.MULTILINE)))[0]
 
-
-#def grabPlayerInfo():
-
-#def grabAllInfo():
-	
-	#Grabs page_1 to page_213
-	#grabSite('http://www.muthead.com/18/players')
-
-
-#login type can either be "curse" or "twitch"
 if __name__ == '__main__':
-	username = 'yaaaaaaaboy'
-	bot = startBot(loginType='twitch', username=username, password='parkerddog10616')
+	bot = startBot(loginType='twitch')
 	bot.startGame()
-	bot.clickPlayNowButton()
-	#grabAllPlayersNums()
-	'''res = grabSite("http://www.muthead.com/18/players/{}/full-ratings".format(raw_input("Player number: ")))
-	page = bs4.BeautifulSoup(res.text, 'lxml')
-	print page.title.string
-	#print page.select("#content")
-	for val in page.select(".player-details-stats span"):
-		print val.getText()'''
-	#res = grabSite(url)
-	#page = bs4.BeautifulSoup(res.text, 'lxml')
+	raw_input("Click Enter when the game begins Screen: ")
+	while True:
+		print("Running")
+		try:
+			bot.solveQuestionOnScreen()
+			time.sleep(1)
+			bot.clickContinueButton()
+			time.sleep(1)
+		except Exception as exp:
+			print("Error")
 
 
