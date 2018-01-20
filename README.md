@@ -1,3 +1,4 @@
+Gauntlet_Bot
 ## Bot for Muthead Gauntlet, a Madden 18 Quiz game with a public scoreboard
 
 ## Getting Started
@@ -19,5 +20,7 @@ After hitting enter again, it will begin automating the browser window.
 
 
 ## Proof that everything works properly
+
+### I am clearly Yaaaaaaaboy
 
 [![N|Solid](src/scoreboard.png)](#)
