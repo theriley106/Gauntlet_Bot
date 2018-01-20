@@ -22,6 +22,10 @@ After hitting enter again, it will begin automating the browser window.
 
 ## Proof that everything works properly
 
-### I am clearly Yaaaaaaaboy
+**I am the player Yaaaaaaaboy**
 
 [![N|Solid](src/scoreboard.png)](#)
+
+## Dataset
+
+If anyone is interested in the underlying dataset, I've also published it on [Kaggle](https://www.kaggle.com/theriley106/madden-18-player-ratings-database-muthead)
