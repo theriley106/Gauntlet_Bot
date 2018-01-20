@@ -1,4 +1,5 @@
-Gauntlet_Bot
+# Gauntlet_Bot
+
 ## Bot for Muthead Gauntlet, a Madden 18 Quiz game with a public scoreboard
 
 ## Getting Started
