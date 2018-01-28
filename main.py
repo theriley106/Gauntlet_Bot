@@ -88,7 +88,7 @@ def grabAllStats(playerID):
 def grabMoreInfoAboutPlayers():
 	fullDB = []
 	lock = threading.Lock()
-	data = loadDatabase()
+	data = loadDatabase('database.json')
 	data = chunks(data, int(len(data)/25))
 	#this makes it so you can have 25 threads running simultaniously
 	def returnPlayerInfo(playNumList):
@@ -139,7 +139,8 @@ def grabMoreInfoAboutPlayers():
 def grabAllPlayersNums(verbose=True, saveAs="database.json"):
 	#This grabs every player number from Muthead - it generates that primaryDB.json
 	playerDB = []
-	for pageNum in range(1,214):
+	for pageNum in range(1,218):
+		#range should be page num + 1
 		try:
 			#Grabs page_1 to page_213
 			url = "http://www.muthead.com/18/players?page={}".format(pageNum)
@@ -282,7 +283,7 @@ class startBot(object):
 		return re.findall('\d+', str(re.sub("(<!--.*?-->)", "", scoreElem, flags=re.MULTILINE)))[0]
 
 if __name__ == '__main__':
-	bot = startBot(loginType='twitch')
+	'''bot = startBot(loginType='twitch')
 	bot.startGame()
 	raw_input("Click Enter when the game begins Screen: ")
 	while True:
@@ -293,6 +294,8 @@ if __name__ == '__main__':
 			bot.clickContinueButton()
 			time.sleep(2)
 		except Exception as exp:
-			print("Error")
+			print("Error")'''
+	#grabAllPlayersNums()
+	grabMoreInfoAboutPlayers()
 
 
