@@ -283,7 +283,7 @@ class startBot(object):
 		return re.findall('\d+', str(re.sub("(<!--.*?-->)", "", scoreElem, flags=re.MULTILINE)))[0]
 
 if __name__ == '__main__':
-	'''bot = startBot(loginType='twitch')
+	bot = startBot(loginType='twitch')
 	bot.startGame()
 	raw_input("Click Enter when the game begins Screen: ")
 	while True:
@@ -294,8 +294,8 @@ if __name__ == '__main__':
 			bot.clickContinueButton()
 			time.sleep(2)
 		except Exception as exp:
-			print("Error")'''
+			print("Error")
 	#grabAllPlayersNums()
-	grabMoreInfoAboutPlayers()
+	#grabMoreInfoAboutPlayers()
 
 
