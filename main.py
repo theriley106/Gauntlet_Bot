@@ -175,7 +175,6 @@ class startBot(object):
 		else:
 			self.autoLogin = True
 		self.driver = webdriver.Firefox()
-		self.driver.set_page_load_timeout(30)
 		#This "Starts" the browser that we will automate
 		if self.autoLogin == True:
 			print("Auto-login is not currently supported")
@@ -189,6 +188,8 @@ class startBot(object):
 				self.driver.get("https://www.muthead.com/login")
 			# this goes to the login screen
 			raw_input("You'll have to login manually.  Click enter after successful login: ")
+
+		self.driver.set_page_load_timeout(30)
 		#self.driver.get()
 
 	def login(self, loginType, username, password):
@@ -237,7 +238,7 @@ class startBot(object):
 			for i, idValue in enumerate(cardsOnScreen):
 				playersOnScreen.append({"ID": idValue, "Index": i, "Value": self.returnPlayerValue(idValue, variable)})
 			return int(sorted(playersOnScreen, key=lambda k: k['Value'], reverse=True)[0]["ID"])
-			
+
 		else:
 			return None
 
@@ -275,7 +276,7 @@ class startBot(object):
 
 	def getAnswerResult(self):
 		return self.driver.find_element_by_css_selector(".result").get_attribute('innerHTML')
-			
+
 	def getCurrentScore(self):
 		scoreElem = self.driver.find_element_by_css_selector(".stat-board .score").get_attribute('innerHTML')
 		return re.findall('\d+', str(re.sub("(<!--.*?-->)", "", scoreElem, flags=re.MULTILINE)))[0]
@@ -290,7 +291,7 @@ if __name__ == '__main__':
 			bot.solveQuestionOnScreen()
 			time.sleep(1)
 			bot.clickContinueButton()
-			time.sleep(1)
+			time.sleep(2)
 		except Exception as exp:
 			print("Error")
 
